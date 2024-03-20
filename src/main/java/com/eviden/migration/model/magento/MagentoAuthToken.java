@@ -1,4 +1,4 @@
-package com.eviden.migration.model.response;
+package com.eviden.migration.model.magento;
 
 import lombok.*;
 

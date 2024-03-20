@@ -40,15 +40,4 @@ public class GlobalExceptionHandler {
         //mostrar respuesta
         log.error("Error autenticacion: {} {}", status, response);
     }
-
-
-    //Metodo que gestiona convertir la imagen a bytes
-    @ExceptionHandler(ImageFailedException.class)
-    public void handleImageFailedException(ImageFailedException ex){
-        //almacenar respuesta de la lectura del fichero
-        String response = ex.getMessage();
-        //mostrar respuesta
-        log.error("Error lectura imagen: {}", response);
-    }
-
 }

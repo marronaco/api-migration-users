@@ -1,4 +1,4 @@
-package com.eviden.migration.model.request;
+package com.eviden.migration.model.magento;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

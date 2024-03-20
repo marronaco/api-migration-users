@@ -1,15 +1,17 @@
-package com.eviden.migration.model;
+package com.eviden.migration.model.drupal;
 
 
 import lombok.*;
 
-import java.util.List;
-
+/**
+ * En esta clase se definen los atributos
+ * establecidos la columnas del CSV
+ */
 @Data
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 @AllArgsConstructor
 @Builder
-public class DrupalUsuarioCsv {
+public class DrupalUsuario {
     //atributos del CSV
     private String uid;
     private String rol;

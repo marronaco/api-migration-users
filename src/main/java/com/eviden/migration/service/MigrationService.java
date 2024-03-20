@@ -1,144 +1,58 @@
 package com.eviden.migration.service;
 
-import com.eviden.migration.model.DrupalProductoCsv;
-import com.eviden.migration.model.DrupalUsuarioCsv;
-import com.eviden.migration.model.request.MagentoUsuario;
-import com.eviden.migration.model.response.MagentoAuthToken;
-import com.eviden.migration.model.response.MagentoMediaResponse;
-import com.eviden.migration.model.response.MagentoProductResponse;
+import com.eviden.migration.model.drupal.DrupalUsuario;
+import com.eviden.migration.model.magento.MagentoAuthToken;
+import com.eviden.migration.model.magento.MagentoUsuario;
+import com.eviden.migration.model.magento.MagentoUsuarioResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.List;
 
 @Slf4j
 @Service
 public class MigrationService {
-    private final DrupalProductoServiceCsv drupalProductoServiceCsv;
-    private final DrupalUsuarioServiceCsv drupalUsuarioServiceCsv;
+    private final DrupalUsuarioService drupalUsuarioService;
     private  final MagentoService magentoService;
 
-    public MigrationService(DrupalProductoServiceCsv drupalProductoServiceCsv,
-                            DrupalUsuarioServiceCsv drupalUsuarioServiceCsv,
+    public MigrationService(DrupalUsuarioService drupalUsuarioService,
                             MagentoService magentoService) {
-        this.drupalProductoServiceCsv = drupalProductoServiceCsv;
-        this.drupalUsuarioServiceCsv = drupalUsuarioServiceCsv;
+        this.drupalUsuarioService = drupalUsuarioService;
         this.magentoService = magentoService;
     }
 
-    //migrar producto de drupal a magento
-    public void migracionProducto(){
-        //drupal: obtener producto
-        List<DrupalProductoCsv> drupalProductos = obtenerProdutosDrupal();
-
-        //magento: autenticar usuario
-        autenticarUsuarioMagento().block();
-        //drupal: iterar sobre los productos
-//        Flux.fromIterable(drupalProductos)
-//                        .flatMapSequential(drupalProducto -> {
-//                            return Mono.delay(Duration.ofSeconds(60))
-//                                    .then(insertarProducto(drupalProducto))
-//                                    .delayElement(Duration.ofSeconds(60))
-//                                    .thenMany(insertarImagenesEnProducto(
-//                                            drupalProducto.getImagesPath(),
-//                                            drupalProducto.getSku()));
-//                        })
-//        .subscribe();
-        // SOLO PRODUCTOS INSERTAR
-        Flux.fromIterable(drupalProductos)
-                .flatMapSequential(drupalProducto -> {
-                    return Mono.delay(Duration.ofSeconds(100))
-                            .then(insertarProducto(drupalProducto))
-                            .delayElement(Duration.ofSeconds(100));
-                })
-                .subscribe(null,
-                        error -> {}
-                        ,() -> {
-                    log.info("Migracion finalizada");
-                });
-//        // SOLO IMAGENES INSERTAR
-//        Flux.fromIterable(drupalProductos)
-//                        .flatMapSequential(drupalProducto -> {
-//                            return Mono.delay(Duration.ofSeconds(100))
-//                                    .thenMany(insertarImagenesEnProducto(
-//                                            drupalProducto.getImagesPath(),
-//                                            drupalProducto.getSku()));
-//                        })
-//        .subscribe();
-
-    }
-
-    private List<DrupalProductoCsv> obtenerProdutosDrupal() {
-        return drupalProductoServiceCsv.importarProductosDrupalDesdeCsv();
-    }
-
-    private Mono<MagentoAuthToken> autenticarUsuarioMagento(){
+     private Mono<MagentoAuthToken> autenticarUsuarioMagento(){
         return magentoService.autenticarUsuario();
-    }
-
-    private Mono<MagentoProductResponse> insertarProducto(DrupalProductoCsv drupalProducto){
-        //insertar producto en magento
-        return magentoService.insertarProducto(drupalProducto)
-                .doOnSuccess(magentoProducto -> {
-                    log.info("Magento: producto Response {}", magentoProducto.toString());
-                });
-    }
-
-    private Flux<MagentoMediaResponse> insertarImagenesEnProducto(List<String> imagesPath, String productoSku){
-        log.info("Cantidad de imagenes asociadas al producto: {}", imagesPath.size());
-        //listado de rutas de images del producto
-
-//        return Flux.fromIterable(imagesPath)
-//                .flatMapSequential(imagePath -> insertarImagenEnProductoConDelay(imagePath, productoSku));
-        return Flux.fromIterable(imagesPath)
-                        .flatMapSequential(imagePath -> {
-                            return Mono.delay(Duration.ofSeconds(100))
-                                    .then(insertarImagenEnProductoConDelay(imagePath, productoSku));
-                        });
-    }
-
-    private Mono<MagentoMediaResponse> insertarImagenEnProductoConDelay(String imagePath, String productoSku){
-        // Insertar imagen en el producto creado con un retraso de 2 segundos entre inserciones
-        return insertarImagenEnProducto(imagePath, productoSku)
-                .delayElement(Duration.ofSeconds(100));
-    }
-
-    private Mono<MagentoMediaResponse> insertarImagenEnProducto(String imagePath, String productoSku){
-        //insertar imagen en el producto creado
-        return  magentoService
-                .insertarImagenEnProducto(imagePath, productoSku)
-                .doOnSuccess(imagenResponse -> {
-                    log.info("Magento: Imagen Response {}", imagenResponse.getImageId());
-                });
     }
 
     public void migracionUsuario() {
         //magento: autenticar usuario
         autenticarUsuarioMagento().block();
         //drupal: obtener usuarios
-        List<DrupalUsuarioCsv> drupalUsuarios = obtenerUsuarioDrupal();
+        List<DrupalUsuario> drupalUsuarios = obtenerUsuarioDrupal();
         //drupal: iterar sobre los productos
         Flux.fromIterable(drupalUsuarios)
                 .flatMapSequential(drupalUsuario -> {
                     return insertarUsuario(drupalUsuario);
                 })
-                .subscribe();
-
-
+                .subscribe(null,
+                        error -> {}
+                        ,() -> {
+                            log.info("Migracion finalizada");
+                        });
     }
 
-    private List<DrupalUsuarioCsv> obtenerUsuarioDrupal() {
-        return drupalUsuarioServiceCsv.importarUsuariosDrupalDesdeCsv();
+    private List<DrupalUsuario> obtenerUsuarioDrupal() {
+        return drupalUsuarioService.importarUsuariosDrupalDesdeCsv();
     }
 
-    private Mono<MagentoUsuario> insertarUsuario(DrupalUsuarioCsv usuarioCsv){
+    private Mono<MagentoUsuarioResponse> insertarUsuario(DrupalUsuario usuarioCsv){
         //insertar producto en magento
         return magentoService.insertarUsuario(usuarioCsv)
                 .doOnSuccess(magentoProducto -> {
-                    log.info("Magento: Usuario Response {}", magentoProducto.getCustomer().getFirstname());
+                    log.info("Magento: Usuario Response '{}'", magentoProducto.getEmail());
                 });
     }
 }

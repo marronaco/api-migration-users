@@ -1,29 +1,35 @@
 package com.eviden.migration.utils;
 
-import com.eviden.migration.model.DrupalUsuarioCsv;
-import com.eviden.migration.model.request.MagentoUsuario;
-import com.eviden.migration.model.request.MagentoUsuario.Addresses;
-import com.eviden.migration.model.request.MagentoUsuario.Customer;
-import com.eviden.migration.model.request.MagentoUsuario.ExtensionAttributes;
-import com.eviden.migration.model.request.MagentoUsuario.Region;
+import com.eviden.migration.model.drupal.DrupalUsuario;
+import com.eviden.migration.model.magento.MagentoUsuario;
+import com.eviden.migration.model.magento.MagentoUsuario.Addresses;
+import com.eviden.migration.model.magento.MagentoUsuario.Customer;
+import com.eviden.migration.model.magento.MagentoUsuario.ExtensionAttributes;
+import com.eviden.migration.model.magento.MagentoUsuario.Region;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 import static java.util.List.of;
 
 @Slf4j
 public class MagentoUsuarioMapper {
+    private static List<String> passwords = new ArrayList<>();
+    private static final String CARACTERES_ESPECIALES = "!@#$%^&*()-_=+";
 
-    public static MagentoUsuario mapDrupalUsuarioToMagento(DrupalUsuarioCsv usuario){
+    public static MagentoUsuario mapDrupalUsuarioToMagento(DrupalUsuario usuario){
         log.info("Mapper: iniciando mapeo del usuario: {}", usuario.getNombre());
         return  MagentoUsuario.builder()
                 .customer(mapCustomerToMagento(usuario))
-                .password("Eviden2024") //TODO: preguntar jesus por la pass por defecto
+                .password(generarPassword())
                 .build();
     }
 
-    private static Customer mapCustomerToMagento(DrupalUsuarioCsv usuario) {
+    private static Customer mapCustomerToMagento(DrupalUsuario usuario) {
         return Customer.builder()
-                .groupId(4) //TODO: MAPEAR ROL
+                .groupId(mapRoleToMagento(usuario.getRol()))
                 .email(usuario.getEmail())
                 .firstname(usuario.getNombre())
                 .lastname(usuario.getApellidos())
@@ -40,6 +46,17 @@ public class MagentoUsuarioMapper {
                 .build();
     }
 
+    private static int mapRoleToMagento(String rol) {
+        log.info("Mapper: Rol");
+        //En magento 1 = General 1 | 4 = UsuarioVIP
+        int rolFinal = 1;
+        //comprobar el tipo de rol de usario del csv
+        if(rol.equals("UsuarioVIP")){
+            rolFinal = 4;
+        }
+        return rolFinal;
+    }
+
     private static Addresses mapAddressesToMagento(String direccion1, String direccion2,
                                                    String telefono, String codigoPostal,
                                                    String ciudad, String nombre,
@@ -48,7 +65,7 @@ public class MagentoUsuarioMapper {
         log.info("Mapper: Adresses");
         return Addresses.builder()
                 .id(1)
-                .customerId(2) //TODO: revisar si es por default
+                .customerId(2)
                 .region(mapRegionToMagento(codProvincia, provincia))
                 .regionId(0)
                 .countryId("ES")
@@ -78,6 +95,28 @@ public class MagentoUsuarioMapper {
         return ExtensionAttributes.builder()
                 .isSubscribed(false)
                 .build();
+    }
+
+
+    private static String generarPassword() {
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder();
+
+        // Generar la primera letra mayúscula
+        char letraMayuscula = (char) (random.nextInt(26) + 'A');
+        sb.append(letraMayuscula);
+
+        // Generar 8 números
+        for (int i = 0; i < 8; i++) {
+            int digito = random.nextInt(10);
+            sb.append(digito);
+        }
+
+        // Generar un carácter especial aleatorio
+        char caracterEspecial = CARACTERES_ESPECIALES.charAt(random.nextInt(CARACTERES_ESPECIALES.length()));
+        sb.append(caracterEspecial);
+
+        return sb.toString();
     }
 
 }

@@ -1,6 +1,6 @@
 package com.eviden.migration.service;
 
-import com.eviden.migration.model.DrupalUsuarioCsv;
+import com.eviden.migration.model.drupal.DrupalUsuario;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import lombok.extern.slf4j.Slf4j;
@@ -8,38 +8,41 @@ import org.springframework.stereotype.Service;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
 @Service
-public class DrupalUsuarioServiceCsv {
-    public List<DrupalUsuarioCsv> importarUsuariosDrupalDesdeCsv() {
-        List<DrupalUsuarioCsv> usuarios = new ArrayList<>();
+public class DrupalUsuarioService {
+    public List<DrupalUsuario> importarUsuariosDrupalDesdeCsv() {
+        List<DrupalUsuario> usuarios = new ArrayList<>();
 
         try {
-            log.info("Drupal: Lectura del CSV Usuarios...");
             //Lectura del fichero csv
-            CSVReader csvReader = new CSVReader(new FileReader("src/main/resources/users.csv"));
+            String rutaEscritorio = System.getenv("CSV_DIRECTORY");
+            String rutaPath = Paths.get(rutaEscritorio,"users.csv").toString();
+            log.info("Drupal: Lectura del CSV '{}'", rutaPath);
+            //Lectura del fichero csv
+            CSVReader csvReader = new CSVReader(new FileReader(rutaPath));
             String[] linea;
             //salto la primera linea
             csvReader.readNext();
             while ((linea = csvReader.readNext()) != null) {
-                DrupalUsuarioCsv usuario = mapToUsuarioDrupalCsv(linea);
+                DrupalUsuario usuario = mapToUsuarioDrupalCsv(linea);
                 usuarios.add(usuario);
             }
 
         } catch (IOException | CsvValidationException e) {
             e.printStackTrace();
         }
-        log.info("Total de usuarios a insertar {}", usuarios.size());
+        log.info("Total de usuarios a insertar '{}'", usuarios.size());
         return usuarios;
     }
 
-    private DrupalUsuarioCsv mapToUsuarioDrupalCsv(String[] linea) {
-        // Separar como con imagenes los roles por coma
-        return DrupalUsuarioCsv.builder()
+    private DrupalUsuario mapToUsuarioDrupalCsv(String[] linea) {
+        log.info("Drupal: usuario email '{}'", linea[2]);
+        return DrupalUsuario.builder()
                 .uid(linea[0])
                 .rol(linea[1])
                 .email(linea[2])
