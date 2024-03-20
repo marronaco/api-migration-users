@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 
 @Slf4j
@@ -35,7 +36,8 @@ public class MigrationService {
         //drupal: iterar sobre los productos
         Flux.fromIterable(drupalUsuarios)
                 .flatMapSequential(drupalUsuario -> {
-                    return insertarUsuario(drupalUsuario);
+                    return Mono.delay(Duration.ofSeconds(100))
+                            .then(insertarUsuario(drupalUsuario));
                 })
                 .subscribe(null,
                         error -> {}
