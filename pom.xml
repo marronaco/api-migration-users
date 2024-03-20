@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.eviden</groupId>
 	<artifactId>migration-users</artifactId>
-	<version>snapshot</version>
+	<version>1.0</version>
 	<name>api-migration-users</name>
 	<description>Migracion de usuarios de Drupal 7 a Magento 2</description>
 	<properties>
