@@ -8,6 +8,7 @@ import com.eviden.migration.model.magento.MagentoAuthToken;
 import com.eviden.migration.model.magento.MagentoUsuario;
 import com.eviden.migration.model.magento.MagentoUsuarioResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -22,6 +23,11 @@ public class MagentoService {
     private final WebClient magentoWebClient;
     private static String  authToken;
 
+    @Value("${magento.user}")
+    private String MAGENTO_USER;
+
+    @Value("${magento.password}")
+    private String MAGENTO_PASSWORD;
     public MagentoService(WebClient magentoWebClient) {
         this.magentoWebClient = magentoWebClient;
     }
@@ -34,8 +40,8 @@ public class MagentoService {
         log.info("Magento: autenticacion del usuario... obteniendo token");
         //definir credenciales del usuario y contraseña
         MagentoAuthRequest authRequest = MagentoAuthRequest.builder()
-                .username("DrupalAdmin")
-                .password("B1llMurr@y")
+                .username(MAGENTO_USER)
+                .password(MAGENTO_PASSWORD)
                 .build();
 
         //almacenar el token devuelto de la solicitud
